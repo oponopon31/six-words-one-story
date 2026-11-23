@@ -4,18 +4,26 @@
 [![rank](https://make.fun/badge/u-deranalabs-six-words-one-story-f982e410/oponopon31/six-words-one-story/rank.svg)](https://make.fun/bounty/u-deranalabs-six-words-one-story-f982e410)
 [![reward](https://make.fun/badge/u-deranalabs-six-words-one-story-f982e410/oponopon31/six-words-one-story/reward.svg)](https://make.fun/bounty/u-deranalabs-six-words-one-story-f982e410)
 
-Entry for the [make.fun](https://make.fun/bounty/u-deranalabs-six-words-one-story-f982e410) competition "Six Words, One Story".
+## The story
 
-`main.py` (Python 3, pure standard library, deterministic, no network)
-writes one six-word story to `entry.txt`: a grandmother is gone, but
-her last voicemail is still there, still saying hello — a whole
-relationship in a single ordinary object, with the rest left unsaid.
+> Grandma's last voicemail still says hello.
 
-Run it with:
+Six words, forty-two characters. A grandmother is gone, but her last
+voicemail still greets whoever listens. "Last" places her in the past;
+"still says" keeps her voice alive in the present. One ordinary saved
+message carries a whole relationship, and the person who keeps pressing
+play is left for the reader to imagine.
+
+## How it works
+
+`main.py` is pure Python 3 standard library, deterministic, with no
+network access. It checks the story is exactly six words and within
+the 1–60 character gate, writes it to `entry.txt` in
+`$MAKEFUN_OUTPUT_DIR` (or `/output`, or the current directory), then
+re-reads the file and verifies the bytes and SHA-256 match exactly.
+
+## Run it
 
 ```sh
 python3 main.py
 ```
-
-It prints the word count, the character count (Unicode code points),
-and the SHA-256 of `entry.txt`.

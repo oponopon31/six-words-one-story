@@ -1,72 +1,83 @@
-#!/usr/bin/env python3
-"""Entry for make.fun competition u-deranalabs-six-words-one-story-f982e410.
+"""Six Words, One Story — a complete story in exactly six words.
 
-Writes one six-word story (1-60 characters) to entry.txt in the output
-directory. Pure standard library, deterministic, no network.
-
-Why this text: a grandmother is gone, but her last voicemail is still
-there, still saying hello every time it is played. The past ("last")
-and the present ("still says") collide in one line: the story is a
-whole relationship — a grandchild who keeps listening — told through a
-single ordinary object. Nothing is spelled out: who listens, how often,
-and what the call was about are all left for the reader to fill in.
-The present tense does the work — "still says" keeps her voice in the
-room now, not in the past. At 42 characters the line is also compact,
-which matters because an exact tie on win rate goes to the smaller text.
+Why this line works: a grandmother is gone, yet her last voicemail
+still says hello. The word "last" puts her in the past, while "still
+says" keeps her voice in the present, so one ordinary object — a saved
+voicemail — holds a whole relationship. The listener is never named;
+the reader fills in who keeps pressing play, and why they cannot
+delete it. Nothing is explained, and nothing more needs to be said.
 """
 
 import hashlib
 import os
+import sys
 
-TEXT = "Grandma's last voicemail still says hello."
+# The story itself: six words, forty-two characters.
+STORY = "Grandma's last voicemail still says hello."
 
-FILENAME = "entry.txt"
-
-
-def write_and_verify(text: str, out_dir: str) -> tuple[str, str]:
-    """Write text to entry.txt in out_dir, then re-read and verify it.
-
-    Returns (path, sha256 hex digest) of the written file.
-    """
-    data = text.encode("utf-8")
-    data.decode("utf-8")  # validate UTF-8 round-trip
-
-    path = os.path.join(out_dir, FILENAME)
-    with open(path, "w", encoding="utf-8", newline="\n") as f:
-        f.write(text)
-
-    with open(path, "rb") as f:
-        written = f.read()
-    digest = hashlib.sha256(data).hexdigest()
-    assert written == data, "entry.txt bytes differ from intended text"
-    assert hashlib.sha256(written).hexdigest() == digest, "sha256 mismatch"
-    return path, digest
+# Gate limits from the competition kit: 1 to 60 UTF-8 characters.
+MIN_CHARS = 1
+MAX_CHARS = 60
 
 
-def main() -> None:
-    text = TEXT
+def pick_output_dir():
+    """Resolve where entry.txt goes, preferring the grader's directory."""
+    for candidate in (os.environ.get("MAKEFUN_OUTPUT_DIR"), "/output", "."):
+        if candidate and os.path.isdir(candidate):
+            return candidate
+    return "."
+
+
+def check_story(text):
+    """Check the story against every rule the gate enforces."""
     words = text.split()
-    assert len(words) == 6, f"story must be exactly six words, got {len(words)}"
-    count = len(text)
-    assert 1 <= count <= 60, f"text length {count} out of range 1-60"
-    assert text.strip(), "text must not be only whitespace"
-    # The gate reads entry.txt as one text: a stray newline or control
-    # character would make the file multi-line or unreadable as a story,
-    # and leading/trailing whitespace would silently change the entry.
-    assert text == text.strip(), "text must not have leading or trailing whitespace"
-    assert not any(ord(c) < 0x20 for c in text), "text must not contain control characters"
+    if len(words) != 6:
+        raise ValueError(f"expected exactly 6 words, got {len(words)}")
+    char_count = len(text)
+    if not MIN_CHARS <= char_count <= MAX_CHARS:
+        raise ValueError(
+            f"expected {MIN_CHARS}-{MAX_CHARS} characters, got {char_count}"
+        )
+    if text != text.strip():
+        raise ValueError("story must not start or end with whitespace")
+    if any(ord(ch) < 0x20 or ord(ch) == 0x7F for ch in text):
+        raise ValueError("story must not contain control characters")
+    if not text.strip():
+        raise ValueError("story must not be only whitespace")
+    if "\n" in text or "\r" in text:
+        raise ValueError("story must be a single line, with no newline")
+    # The gate counts characters, so confirm the UTF-8 round-trip is exact.
+    if text.encode("utf-8").decode("utf-8") != text:
+        raise ValueError("story is not clean UTF-8 text")
+    return words, char_count
 
-    out_dir = os.environ.get("MAKEFUN_OUTPUT_DIR") or "/output"
-    if not os.path.isdir(out_dir):
-        out_dir = "."
-    path, digest = write_and_verify(text, out_dir)
 
+def main():
+    words, char_count = check_story(STORY)
+
+    out_dir = pick_output_dir()
+    path = os.path.join(out_dir, "entry.txt")
+
+    payload = STORY.encode("utf-8")
+    with open(path, "wb") as handle:
+        handle.write(payload)
+
+    # Re-read the file and prove the bytes on disk are exactly the story.
+    with open(path, "rb") as handle:
+        written = handle.read()
+    if written != payload:
+        raise ValueError("entry.txt bytes do not match the story")
+    digest = hashlib.sha256(written).hexdigest()
+    if digest != hashlib.sha256(payload).hexdigest():
+        raise ValueError("entry.txt sha256 does not match the story")
+
+    print(f"story: {STORY}")
     print(f"words: {len(words)}")
-    print(f"chars: {count}")
+    print(f"characters: {char_count}")
     print(f"sha256: {digest}")
     print(f"wrote: {path}")
-    print("verified: entry.txt bytes match the text exactly")
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
