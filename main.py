@@ -50,6 +50,11 @@ def main() -> None:
     count = len(text)
     assert 1 <= count <= 60, f"text length {count} out of range 1-60"
     assert text.strip(), "text must not be only whitespace"
+    # The gate reads entry.txt as one text: a stray newline or control
+    # character would make the file multi-line or unreadable as a story,
+    # and leading/trailing whitespace would silently change the entry.
+    assert text == text.strip(), "text must not have leading or trailing whitespace"
+    assert not any(ord(c) < 0x20 for c in text), "text must not contain control characters"
 
     out_dir = os.environ.get("MAKEFUN_OUTPUT_DIR") or "/output"
     if not os.path.isdir(out_dir):
